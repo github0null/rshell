@@ -2312,6 +2312,7 @@ class Shell(cmd.Cmd):
            This will cause directories and their contents to be recursively
            copied.
        """
+        QUIET or self.print(f"Executing 'cp {line}' ...")
         args = self.line_to_args(line)
         if len(args.filenames) < 2:
             print_err('Missing destination file')
@@ -2366,8 +2367,11 @@ class Shell(cmd.Cmd):
                             print_err(err.format(dst_filename))
                             return
 
+                    pf = lambda *args : None
+                    if not QUIET:
+                        pf = lambda *args: self.print(' ' + ' '.join(str(arg) for arg in args))
                     rsync(src_filename, dst_filename, mirror=False, dry_run=False,
-                          print_func=lambda *args: None, recursed=False, sync_hidden=args.all)
+                          print_func=pf, recursed=False, sync_hidden=args.all)
                 else:
                     print_err("Omitting directory {}".format(src_filename))
                 continue
@@ -2375,11 +2379,12 @@ class Shell(cmd.Cmd):
                 dst_filename = dst_dirname + '/' + os.path.basename(src_filename)
             else:
                 dst_filename = dst_dirname
-            self.print("Copying '{}' to '{}' ...".format(src_filename, dst_filename))
+            self.print(" Copying '{}' to '{}' ...".format(src_filename, dst_filename))
             if not cp(src_filename, dst_filename):
                 err = "Unable to copy '{}' to '{}'"
                 print_err(err.format(src_filename, dst_filename))
-                break
+                return
+        QUIET or self.print(f"Done.")
 
     argparse_date = (
         add_arg(
@@ -2858,6 +2863,7 @@ class Shell(cmd.Cmd):
            any contents) -r must be specified.
 
         """
+        QUIET or self.print(f"Executing 'rm {line}' ...")
         args = self.line_to_args(line)
         filenames = args.filename
         # Process PATTERN
@@ -2872,10 +2878,12 @@ class Shell(cmd.Cmd):
 
         for filename in filenames:
             filename = resolve_path(filename)
+            QUIET or self.print(f" Removing '{filename}' ...")
             if not rm(filename, recursive=args.recursive, force=args.force):
                 if not args.force:
                     print_err("Unable to remove '{}'".format(filename))
-                break
+                return
+        QUIET or self.print(f"Done.")
 
     def do_shell(self, line):
         """!some-shell-command args
@@ -2941,10 +2949,14 @@ class Shell(cmd.Cmd):
         src_dir = resolve_path(args.src_dir)
         dst_dir = resolve_path(args.dst_dir)
         verbose = not args.quiet
-        pf = print if args.dry_run or verbose else lambda *args : None
+        pf = lambda *args : None
+        if args.dry_run or verbose:
+            self.print(f"Executing 'rsync {line}' ...")
+            pf = lambda *args: self.print(' ' + ' '.join(str(arg) for arg in args))
         rsync(src_dir, dst_dir, mirror=args.mirror, dry_run=args.dry_run,
              print_func=pf, recursed=False, sync_hidden=args.all)
-
+        if args.dry_run or verbose:
+            self.print(f"Done.")
 
 def real_main():
     """The main program."""
