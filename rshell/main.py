@@ -634,7 +634,7 @@ def tree(root_path, max_depth=None):
             else:
                 _outputs.append(indent + T_FORK + ' ' + fname)
             # cursive dir
-            if group[1] == 0x4000:
+            if (group[1] & 0x4000) != 0:
                 p = ('' if path == '/' else path) + '/' + fname
                 if max_depth != None:
                     if depth + 1 < max_depth:
@@ -851,6 +851,14 @@ def listdir(dirname):
     import os
     return os.listdir(dirname)
 
+def listsubdirs(dirname):
+    """Returns a list of subdir's filenames contained in the named directory."""
+    import os
+    _result = []
+    for group in os.ilistdir(dirname): # -> (name, type, inode[, size])
+        if (group[1] & 0x4000) != 0:
+            _result.append(group[0])
+    return _result
 
 def listdir_matches(match):
     """Returns a list of filenames contained in the named directory.
@@ -1573,14 +1581,14 @@ class Device(object):
             self.has_buffer = self.remote_eval(test_buffer)
             QUIET or print('Y' if self.has_buffer else 'N')
         else:
-            QUIET or print('Testing if ubinascii.unhexlify exists ... ', end='', flush=True)
+            #QUIET or print('Testing if ubinascii.unhexlify exists ... ', end='', flush=True)
             unhexlify_exists = self.remote_eval(test_unhexlify)
-            QUIET or print('Y' if unhexlify_exists else 'N')
+            #QUIET or print('Y' if unhexlify_exists else 'N')
             if not unhexlify_exists:
                 raise ShellError('rshell needs MicroPython firmware with ubinascii.unhexlify')
-        QUIET or print('Retrieving root directories ... ', end='', flush=True)
+        #QUIET or print('Retrieving root directories ... ', end='', flush=True)
         self.root_dirs = ['/{}/'.format(dir) for dir in self.remote_eval(listdir, '/')]
-        QUIET or print(' '.join(self.root_dirs))
+        #QUIET or print(' '.join(self.root_dirs))
         QUIET or print('Setting time ... ', end='', flush=True)
         now = self.sync_time()
         QUIET or print(time.strftime('%b %d, %Y %H:%M:%S', now))
