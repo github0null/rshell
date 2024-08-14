@@ -1587,7 +1587,7 @@ class Device(object):
             if not unhexlify_exists:
                 raise ShellError('rshell needs MicroPython firmware with ubinascii.unhexlify')
         #QUIET or print('Retrieving root directories ... ', end='', flush=True)
-        self.root_dirs = ['/{}/'.format(dir) for dir in self.remote_eval(listdir, '/')]
+        self.root_dirs = ['/{}/'.format(dir) for dir in self.remote_eval(listsubdirs, '/')]
         #QUIET or print(' '.join(self.root_dirs))
         QUIET or print('Setting time ... ', end='', flush=True)
         now = self.sync_time()
