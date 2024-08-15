@@ -2493,7 +2493,7 @@ class Shell(cmd.Cmd):
             return
         if dev is None:
             # File is local
-            os.system("{} '{}'".format(EDITOR, filename))
+            os.system("{} \"{}\"".format(EDITOR, filename))
         else:
             # File is remote
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -2502,7 +2502,7 @@ class Shell(cmd.Cmd):
                     print('Retrieving {} ...'.format(filename))
                     cp(filename, local_filename)
                 old_stat = get_stat(local_filename)
-                if os.system("{} '{}'".format(EDITOR, local_filename)) == 0:
+                if os.system("{} \"{}\"".format(EDITOR, local_filename)) == 0:
                     new_stat = get_stat(local_filename)
                     if old_stat != new_stat:
                         self.print('Updating {} ...'.format(filename))
@@ -3081,7 +3081,13 @@ def real_main():
     default_dtr = os.getenv('RSHELL_DTR') or DTR
     default_user = os.getenv('RSHELL_USER') or 'micro'
     default_password = os.getenv('RSHELL_PASSWORD') or 'python'
-    default_editor = os.getenv('RSHELL_EDITOR') or os.getenv('VISUAL') or os.getenv('EDITOR') or 'vi'
+    default_editor = os.getenv('RSHELL_EDITOR') or os.getenv('VISUAL') or os.getenv('EDITOR')
+    if default_editor == None:
+        default_editor = 'vi'
+        if sys.platform == 'win32':
+            # pre-intsall vim-win32 on your PC:
+            # https://github.com/vim/vim-win32-installer/releases
+            default_editor = 'vim'
     default_color = sys.stdout.isatty()
     default_nocolor = not default_color
     global BUFFER_SIZE
