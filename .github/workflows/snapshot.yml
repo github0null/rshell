@@ -57,3 +57,4 @@ jobs:
       with:
         name: Snapshot ${{ env.DIST_NAME }}
         files: dist/*.whl
+        make_latest: "true"
