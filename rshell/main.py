@@ -621,7 +621,6 @@ def reset():
     """Reset micropython device"""
     import machine
     machine.soft_reset()
-    return ''
 
 def tree(root_path, max_depth=None):
     """List directory by tree view"""
