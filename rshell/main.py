@@ -526,13 +526,13 @@ def resolve_path(path):
     if path[0] == '~':
         # ~ or ~user
         path = os.path.expanduser(path)
-    if path[0] != '/':
+    if path[0] != '/' and not re.match(r"[a-zA-Z]:(\\|\/)", path):
         # Relative path
         if cur_dir[-1] == '/':
             path = cur_dir + path
         else:
             path = cur_dir + '/' + path
-    comps = path.split('/')
+    comps = re.split(r'\/|\\', path)
     new_comps = []
     for comp in comps:
         # We strip out xxx/./xxx and xxx//xxx, except that we want to keep the
@@ -2174,7 +2174,8 @@ class Shell(cmd.Cmd):
         """
         # Note: using shlex.split causes quoted substrings to stay together.
         try:
-            args = shlex.split(line)
+            posix_mode = False if sys.platform == 'win32' else True
+            args = shlex.split(line, posix=posix_mode)
         except ValueError as err:
             raise DeviceError(str(err))
         self.redirect_filename = ''
