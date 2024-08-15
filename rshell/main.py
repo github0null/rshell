@@ -617,6 +617,12 @@ def auto(func, filename, *args, **kwargs):
         return func(dev_filename, *args, **kwargs)
     return dev.remote_eval(func, dev_filename, *args, **kwargs)
 
+def reset():
+    """Reset micropython device"""
+    import machine
+    machine.soft_reset()
+    return ''
+
 def tree(root_path, max_depth=None):
     """List directory by tree view"""
     import os
@@ -3034,6 +3040,33 @@ class Shell(cmd.Cmd):
             print_err("'{}' is not a dir !".format(dirpath))
             return
         self.print(dev.remote(tree, filepath, depth).decode())
+
+    argparse_reset = (
+        add_arg(
+            'board',
+            metavar='BOARD_NAME',
+            action='store',
+            help='board name'
+        ),
+    )
+
+    def do_reset(self, line):
+        """reset BOARD_NAME            Performs a reset of the board
+
+           Performs a soft reset of the interpreter, deleting all Python 
+           objects and resetting the Python heap.
+
+           It tries to retain the method by which the user is connected to 
+           the MicroPython REPL (eg serial, USB, Wifi).
+        """
+        args = self.line_to_args(line)
+        _board = args.board
+        dev = find_device_by_name(_board)
+        if dev == None:
+            print_err(f"no such device: '{_board}'")
+            return
+        dev.remote(reset)
+        self.print('Done.')
 
 def real_main():
     """The main program."""
