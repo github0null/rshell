@@ -887,12 +887,14 @@ def listdir_matches(match):
             # This can happen when a symlink points to a non-existant file.
             pass
         return filename
-    if not os.path.isdir(dirname):
+    try:
+        matches = []
+        for filename in os.listdir(dirname):
+            if filename.startswith(match_prefix):
+                matches.append(add_suffix_if_dir(result_prefix + filename))
+        return matches
+    except:
         return []
-    matches = [add_suffix_if_dir(result_prefix + filename)
-               for filename in os.listdir(dirname) if filename.startswith(match_prefix)]
-    return matches
-
 
 @extra_funcs(is_visible, lstat)
 def listdir_lstat(dirname, show_hidden=True):
