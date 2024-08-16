@@ -617,6 +617,14 @@ def auto(func, filename, *args, **kwargs):
         return func(dev_filename, *args, **kwargs)
     return dev.remote_eval(func, dev_filename, *args, **kwargs)
 
+def rename(old_path, new_path):
+    """Rename a file/folder"""
+    try:
+        import os
+        os.rename(old_path, new_path)
+    except Exception as e:
+        return str(e)
+
 def reset():
     """Reset micropython device"""
     import machine
@@ -3066,6 +3074,45 @@ class Shell(cmd.Cmd):
             return
         dev.remote(reset)
         self.print('Done.')
+
+    argparse_rename = (
+        add_arg(
+            'o_name',
+            metavar='OLD_NAME',
+            action='store',
+            help='old file name'
+        ),
+        add_arg(
+            'n_name',
+            metavar='NEW_NAME',
+            action='store',
+            help='new file name'
+        ),
+    )
+
+    def do_rename(self, line):
+        """rename OLD_NAME NEW_NAME           Rename a file/folder
+
+           !!! Notice: Not support local files/folders.
+        """
+        QUIET or self.print(f"Executing 'rename {line}' ...")
+        args = self.line_to_args(line)
+        src_dev, srcpath = get_dev_and_path(args.o_name)
+        if src_dev == None:
+            print_err(f"no such file: '{args.o_name}'")
+            return
+        dst_dev, dstpath = get_dev_and_path(args.n_name)
+        if dst_dev == None:
+            print_err(f"no such file: '{args.n_name}'")
+            return
+        if src_dev != dst_dev:
+            print_err(f"cannot cross two different device: '{src_dev.name}' -> '{dst_dev.name}'")
+            return
+        _ret = eval(str(src_dev.remote(rename, srcpath, dstpath))).decode()
+        if not _ret.startswith('None'):
+            print_err(f"error: {_ret}")
+            return
+        QUIET or self.print('Done.')
 
 def real_main():
     """The main program."""
